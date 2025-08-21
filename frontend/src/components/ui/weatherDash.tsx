@@ -13,23 +13,11 @@ import {
   CarouselApi,
 } from "../ui/carousel";
 
-import { Separator } from "../ui/separator";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
+import { ChartContainer } from "../ui/chart";
+import { transformWeatherData } from "../../lib/utils";
 
-import {
-  LineChart,
-  AreaChart,
-  Area,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { ChartContainer, ChartLegend, ChartLegendContent } from "../ui/chart";
-import Image from "next/image";
-import { useWeather, transformWeatherData } from "../../lib/useWeather";
+import { useState, useEffect, useRef } from "react";
 
 // Types for slide data
 interface WeatherData {
@@ -40,6 +28,7 @@ interface WeatherData {
   humidity: string;
   precip: string;
   lastUpdate: string;
+  icon?: string; // Add icon field
 }
 
 interface GenerationData {
@@ -52,23 +41,8 @@ interface SlideData {
   description: string[];
   weather: WeatherData;
   generation: GenerationData;
+  chartData: Array<{ time: string; generation: number }>;
 }
-
-// Chart data (you can move this to props or context if needed)
-const data = [
-  { time: "12:00 AM", generation: 50 },
-  { time: "1:00 AM", generation: 52 },
-  { time: "2:00 AM", generation: 55 },
-  { time: "3:00 AM", generation: 53 },
-  { time: "4:00 AM", generation: 56 },
-  { time: "5:00 AM", generation: 58 },
-  { time: "6:00 AM", generation: 60 },
-  { time: "7:00 AM", generation: 62 },
-  { time: "8:00 AM", generation: 64 },
-  { time: "9:00 AM", generation: 66 },
-  { time: "10:00 AM", generation: 68 },
-  { time: "11:00 AM", generation: 70 },
-];
 
 const chartConfig = {
   generation: {
@@ -84,9 +58,15 @@ const chartConfig = {
 // Carousel Slide Content Component
 interface CarouselSlideContentProps {
   slide: SlideData;
+  chartData: Array<{ time: string; generation: number }>; // Add chartData prop
+  isLoading?: boolean; // Add isLoading prop
 }
 
-function CarouselSlideContent({ slide }: CarouselSlideContentProps) {
+function CarouselSlideContent({
+  slide,
+  chartData,
+  isLoading,
+}: CarouselSlideContentProps) {
   return (
     <main className="z-10 grid grid-cols-[2fr_2fr_2fr_0.08fr_2fr_2fr_2fr_2fr_2fr] grid-rows-[1fr_1fr_1fr_1fr_1fr] gap-4 w-full h-full">
       {/* Div 1 - Description */}
@@ -114,7 +94,18 @@ function CarouselSlideContent({ slide }: CarouselSlideContentProps) {
                 {slide.weather.temp}
               </div>
               <div className="text-4xl 4k:text-7xl">
-                {slide.weather.condition === "Sunny" ? "☀️" : "🌥️"}
+                {slide.weather.icon ? (
+                  <img
+                    src={slide.weather.icon}
+                    alt={slide.weather.condition}
+                    className="w-16 h-16 4k:w-24 4k:h-24"
+                  />
+                ) : // Fallback emoji if no icon available
+                slide.weather.condition === "Sunny" ? (
+                  "☀️"
+                ) : (
+                  "🌥️"
+                )}
               </div>
             </div>
             <div className="text-xl 4k:text-5xl">{slide.weather.condition}</div>
@@ -129,7 +120,18 @@ function CarouselSlideContent({ slide }: CarouselSlideContentProps) {
       <div className="col-start-3 row-start-2">
         <Card className="h-full shadow-lg">
           <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-3xl">Wind</div>
+            <div className="text-gray-600 mb-1 4k:text-3xl flex items-center justify-left gap-2">
+              <img
+                src="/Icons/windy.png"
+                alt="Wind"
+                className="w-4 h-4 4k:w-8 4k:h-8"
+                style={{
+                  filter:
+                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
+                }}
+              />
+              Wind Speed
+            </div>
             <div className="font-semibold text-lg 4k:text-4xl">
               {slide.weather.wind}
             </div>
@@ -141,7 +143,18 @@ function CarouselSlideContent({ slide }: CarouselSlideContentProps) {
       <div className="col-start-3 row-start-3">
         <Card className="h-full shadow-lg">
           <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-3xl">Humidity</div>
+            <div className="text-gray-600 mb-1 4k:text-3xl flex items-center justify-left gap-2">
+              <img
+                src="/Icons/humidity.png"
+                alt="Humidity"
+                className="w-4 h-4 4k:w-8 4k:h-8"
+                style={{
+                  filter:
+                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
+                }}
+              />
+              Humidity
+            </div>
             <div className="font-semibold text-lg 4k:text-4xl">
               {slide.weather.humidity}
             </div>
@@ -153,7 +166,18 @@ function CarouselSlideContent({ slide }: CarouselSlideContentProps) {
       <div className="col-start-3 row-start-4">
         <Card className="h-full shadow-lg">
           <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-3xl">Precip</div>
+            <div className="text-gray-600 mb-1 4k:text-3xl flex items-center justify-left gap-2">
+              <img
+                src="/Icons/rain.png"
+                alt="Precipitation"
+                className="w-4 h-4 4k:w-8 4k:h-8"
+                style={{
+                  filter:
+                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
+                }}
+              />
+              Precipitation
+            </div>
             <div className="font-semibold text-lg 4k:text-4xl">
               {slide.weather.precip}
             </div>
@@ -168,7 +192,18 @@ function CarouselSlideContent({ slide }: CarouselSlideContentProps) {
       <div className="col-start-5 row-start-2">
         <Card className="h-full backdrop-blur-md border-0 shadow-lg">
           <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-5xl">Generation</div>
+            <div className="text-gray-600 mb-1 4k:text-3xl flex items-center justify-left gap-2">
+              <img
+                src="/Icons/electricity-icon-png-4541.png"
+                alt="Generation"
+                className="w-4 h-4 4k:w-8 4k:h-8"
+                style={{
+                  filter:
+                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
+                }}
+              />
+              Generation
+            </div>
             <div className="font-semibold text-xl 4k:text-5xl">
               {slide.generation.generation}
             </div>
@@ -200,47 +235,52 @@ function CarouselSlideContent({ slide }: CarouselSlideContentProps) {
         </Card>
       </div>
 
-      {/* Div 10 - Chart */}
+      {/* Div 10 - Chart - use the passed chartData */}
       <div className="col-span-4 row-span-3 col-start-6 row-start-2">
         <Card className="h-full">
           <CardHeader>
-            <CardTitle>MW Generation (Last 12 Hours)</CardTitle>
+            <CardTitle>
+              MW Generation (Last 6 Hours)
+              {isLoading && (
+                <span className="text-sm text-gray-500 ml-2">(Loading...)</span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent className="h-[calc(100%-3rem)]">
-            {/* 👆 ensures CardContent fills available space after header */}
             <ChartContainer config={chartConfig} className="h-full w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={data}
-                  margin={{
-                    top: 0,
-                    left: -10,
-                    right: 12,
-                    bottom: 0,
-                  }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="time"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => value.toString()}
-                  />
-                  <YAxis
-                    dataKey="generation"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                  />
-                  <Area
-                    dataKey="generation"
-                    type="natural"
-                    fill="var(--color-accent)"
-                    stroke="var(--color-accent)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <AreaChart
+                width={516}
+                height={248}
+                data={chartData}
+                margin={{
+                  top: 0,
+                  left: -10,
+                  right: 12,
+                  bottom: 0,
+                }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="time"
+                  tickLine={true}
+                  axisLine={true}
+                  tickMargin={8}
+                  tickFormatter={(value) => value.toString()}
+                />
+                <YAxis
+                  dataKey="generation"
+                  tickLine={true}
+                  axisLine={true}
+                  tickMargin={8}
+                />
+                <Area
+                  dataKey="generation"
+                  type="natural"
+                  fill="var(--color-accent)"
+                  stroke="var(--color-accent)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -252,43 +292,203 @@ function CarouselSlideContent({ slide }: CarouselSlideContentProps) {
 export function WeatherDashboard() {
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
+  const [isTransitioning, setIsTransitioning] = React.useState(false);
 
-  // Weather API configuration
-  const apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY || "";
-
-  // Define locations for each slide
+  // Define Zip Codes for each site
   const locations = [
-    "Blanding, UT", // Red Mesa Solar (near the location)
-    "Veyo, UT", // Veyo Heat Recovery
-    "Idaho Falls, ID", // Horse Butte Wind
-    "Salt Lake City, UT", // Hunter (fallback)
-    "Salt Lake City, UT", // Steel (fallback)
+    "84511", // Red Mesa Solar (Blanding near the location)
+    "84782", // Veyo Heat Recovery
+    "83427", // Horse Butte Wind
+    "84513", // Hunter
+    "84330", // Steel Solar
   ];
 
-  // Fetch weather for current slide location
-  const {
-    weather: weatherData,
-    isLoading: weatherLoading,
-    error: weatherError,
-  } = useWeather(locations[current] || locations[0], apiKey);
+  // Add this at the top of the WeatherDashboard component
+  const [allWeatherData, setAllWeatherData] = useState<{ [key: string]: any }>(
+    {}
+  );
+  // Replace useState with useRef for lastWeatherUpdate
+  const lastWeatherUpdate = useRef(0);
+
+  // Replace the useWeather call with this effect
+  useEffect(() => {
+    const fetchAllWeather = async () => {
+      const now = Date.now();
+
+      // Only fetch if 30 minutes have passed
+      if (now - lastWeatherUpdate.current < 30 * 60 * 1000) return;
+
+      lastWeatherUpdate.current = now; // Updates immediately
+
+      try {
+        const weatherPromises = locations.map(async (location) => {
+          const response = await fetch(
+            `/api/weather?location=${encodeURIComponent(location)}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            return { location, data };
+          }
+
+          return null;
+        });
+
+        const results = await Promise.all(weatherPromises);
+        const weatherMap: { [key: string]: any } = {};
+
+        results.forEach((result) => {
+          if (result) {
+            weatherMap[result.location] = result.data;
+          }
+        });
+
+        setAllWeatherData(weatherMap);
+        lastWeatherUpdate.current = now; // Set at the end
+      } catch (error) {
+        console.log("Error fetching weather:", error);
+      }
+    };
+
+    // Fetch initially and then every 30 minutes
+    fetchAllWeather();
+  }, [current]);
+
+  // Add VTScada state and ref
+  const [allVTScadaData, setAllVTScadaData] = useState<{ [key: number]: any }>(
+    {}
+  );
+  const lastVTScadaUpdate = useRef(0);
+
+  // Add this useEffect for VTScada data
+  useEffect(() => {
+    const fetchAllVTScada = async () => {
+      const now = Date.now();
+
+      // Only fetch if 5 minutes have passed
+      if (now - lastVTScadaUpdate.current < 5 * 60 * 1000) return;
+
+      lastVTScadaUpdate.current = now;
+
+      try {
+        // Fetch data for all active facilities (0, 1, 2)
+        const vtscadaPromises = [0, 1, 2].map(async (slideIndex) => {
+          // Check if we have cached data for this slide
+          const existingData = allVTScadaData[slideIndex] || [];
+          const hasExistingData = existingData.length > 0;
+
+          // Use incremental if we have existing data, full if we don't
+          const isIncremental = hasExistingData;
+          const url = `/api/vtscada?slideIndex=${slideIndex}${
+            isIncremental ? "&incremental=true" : ""
+          }`;
+
+          const response = await fetch(url);
+          if (response.ok) {
+            const data = await response.json();
+            return { slideIndex, data: data.chartData, isIncremental };
+          }
+          return null;
+        });
+
+        const results = await Promise.all(vtscadaPromises);
+        const vtscadaMap: { [key: number]: any } = {};
+
+        results.forEach((result) => {
+          if (result) {
+            if (result.isIncremental) {
+              // Merge incremental data with existing data
+              const existingData = allVTScadaData[result.slideIndex] || [];
+              const newData = result.data || [];
+
+              // Create a map to merge data by timestamp
+              const dataMap = new Map();
+              const now = Date.now() / 1000;
+              const sixHoursAgo = now - 6 * 60 * 60;
+
+              // Add existing data (only keep last 6 hours)
+              existingData.forEach((item: any) => {
+                if (item.timestamp >= sixHoursAgo) {
+                  dataMap.set(item.timestamp, item);
+                }
+              });
+
+              // Add new data (will overwrite duplicates)
+              newData.forEach((item: any) => {
+                if (item.timestamp >= sixHoursAgo) {
+                  dataMap.set(item.timestamp, item);
+                }
+              });
+
+              // Convert back to array and sort by timestamp
+              const mergedData = Array.from(dataMap.values()).sort(
+                (a: any, b: any) => a.timestamp - b.timestamp
+              );
+
+              vtscadaMap[result.slideIndex] = mergedData;
+            } else {
+              // Full data replacement
+              vtscadaMap[result.slideIndex] = result.data;
+            }
+          }
+        });
+
+        setAllVTScadaData((prevData) => ({
+          ...prevData,
+          ...vtscadaMap,
+        }));
+        lastVTScadaUpdate.current = now; // Set at the end
+      } catch (error) {
+        console.log("Error fetching VTScada data:", error);
+      }
+    };
+
+    // Fetch initially
+    fetchAllVTScada();
+  }, [current]);
+
+  useEffect(() => {
+    console.log("Changing on slide change", current);
+  }, [current]);
+
+  // Use the cached weather data instead of useWeather
+  const currentLocation = locations[current] || locations[0];
+  const weatherData = allWeatherData[currentLocation];
+  const weatherLoading = !weatherData;
+  const weatherError = null;
+
+  // Replace useChartData with cached VTScada data
+  const chartData = allVTScadaData[current] || [];
+  const chartLoading = !chartData.length;
+  const currentGeneration =
+    chartData.length > 0
+      ? `${chartData[chartData.length - 1]?.generation || 0} MW`
+      : "N/A";
 
   // Button names corresponding to each slide
   const buttonNames = [
     "Red Mesa Solar",
     "Veyo Heat Recovery",
     "Horse Butte Wind",
-    "Hunter",
-    "Steel",
+    "Hunter Power Plant",
+    "Steel Solar",
   ];
 
   // Background images corresponding to each slide
   const backgroundImages = [
     "/Blymyer_Projects_Red-Mesa_Utah_solar_utility.webp",
-    "/UAMPS-Veyo-Recovered-Energy-Generation-3.jpg",
-    "/wind-farm.jpg",
+    "/UAMPS-Veyo-Recovered-Energy-Generation-3.webp",
+    "/wind-farm.webp",
     "/hunter-plant-background.webp",
-    "/steel-plant-background.webp",
+    "/steel-solar.webp",
   ];
+
+  // Preload all background images
+  React.useEffect(() => {
+    backgroundImages.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   React.useEffect(() => {
     if (!api) return;
@@ -296,27 +496,38 @@ export function WeatherDashboard() {
     setCurrent(api.selectedScrollSnap());
 
     api.on("select", () => {
-      setCurrent(api.selectedScrollSnap());
+      const newIndex = api.selectedScrollSnap();
+      if (newIndex !== current) {
+        setIsTransitioning(true);
+        // Start transition immediately
+        setCurrent(newIndex);
+        // End transition after animation completes
+        setTimeout(() => setIsTransitioning(false), 1500); // Slightly longer than CSS transition
+      }
     });
-  }, [api]);
+  }, [api, current]);
 
   // Transform weather data or use fallback
   const currentWeather = React.useMemo(() => {
     if (weatherData && !weatherLoading && !weatherError) {
-      return transformWeatherData(weatherData);
+      const transformedData = transformWeatherData(weatherData);
+      if (transformedData) {
+        return transformedData;
+      }
     }
 
-    // Fallback weather data
+    // Fallback weather data - always return a valid WeatherData object
     return {
-      city: locations[current] || "Salt Lake City, UT",
+      city: currentLocation || "Salt Lake City, UT",
       temp: weatherLoading ? "Loading..." : "N/A",
       condition: weatherLoading ? "Loading..." : "Unknown",
       wind: weatherLoading ? "..." : "N/A",
       humidity: weatherLoading ? "..." : "N/A",
       precip: weatherLoading ? "..." : "N/A",
       lastUpdate: weatherError ? "Error loading weather" : "Loading...",
+      icon: undefined, // No icon for fallback data
     };
-  }, [weatherData, weatherLoading, weatherError, current, locations]);
+  }, [weatherData, weatherLoading, weatherError, currentLocation]);
 
   const slides: SlideData[] = [
     {
@@ -327,10 +538,11 @@ export function WeatherDashboard() {
       ],
       weather: currentWeather, // Use dynamic weather data
       generation: {
-        generation: "62.5 MW",
+        generation: currentGeneration, // Use dynamic current generation
         efficiency: "98.5%",
         uptime: "24/7",
       },
+      chartData: chartData,
     },
     {
       description: [
@@ -340,10 +552,11 @@ export function WeatherDashboard() {
       ],
       weather: currentWeather, // Use dynamic weather data
       generation: {
-        generation: "58 MW",
+        generation: currentGeneration, // Use dynamic current generation
         efficiency: "95%",
         uptime: "24/7",
       },
+      chartData: chartData,
     },
     {
       description: [
@@ -353,30 +566,43 @@ export function WeatherDashboard() {
       ],
       weather: currentWeather, // Use dynamic weather data
       generation: {
-        generation: "62.5 MW",
+        generation: currentGeneration, // Use dynamic current generation
         efficiency: "98.5%",
         uptime: "24/7",
       },
+      chartData: chartData,
     },
   ];
 
   return (
-    <div className="relative bg-white flex flex-col min-h-screen">
-      {/* Background with CSS and transition */}
-      <div
-        className="absolute inset-0 opacity-60 transition-all duration-500 fade-in-out"
-        style={{
-          backgroundImage: `url(${backgroundImages[current]})`,
-          backgroundSize: "cover", // fit inside without cropping
-          backgroundColor: "white", // or any fallback color behind gaps
-        }}
-      />
+    <div className="relative bg-gray-300 flex flex-col min-h-screen overflow-hidden">
+      {/* Background Images with smooth crossfade */}
+      <div className="absolute inset-0">
+        {backgroundImages.map((image, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-[1200ms] ease-in-out ${
+              index === current ? "opacity-60" : "opacity-0"
+            }`}
+            style={{
+              backgroundImage: `url(${image})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundColor: "transparent",
+            }}
+          />
+        ))}
+      </div>
 
-      <div className="mx-[8vh] my-[6vh] 4k:mx-[8vh] 4k:my-[8vh] z-10">
+      <div className="mx-[8vh] my-[6vh] 4k:mx-[8vh] 4k:my-[8vh] z-10 relative">
         {/* Header - Scalable */}
         <header>
           <div className="font-sans text-lg text-right tv:text-3xl 4k:text-6xl ">
-            Monday, August 11, 2025
+            {new Date().toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
           </div>
 
           <div className="flex flex-row justify-between pb-6 4k:mb-15">
@@ -405,13 +631,19 @@ export function WeatherDashboard() {
         {/* Main Content Carousel */}
         <Carousel
           setApi={setApi}
-          plugins={[Autoplay({ delay: 12000, stopOnInteraction: true })]}
+          plugins={[Autoplay({ delay: 5000, stopOnInteraction: false })]}
           className="w-full"
         >
           <CarouselContent>
             {slides.map((slide, index) => (
               <CarouselItem key={index} className="h-[70vh] 4k:h-[80vh]">
-                <CarouselSlideContent slide={slide} />
+                <CarouselSlideContent
+                  slide={slide}
+                  chartData={
+                    index === current ? chartData : []
+                  } /* Only pass data to current slide */
+                  isLoading={chartLoading} /* Show loading state */
+                />
               </CarouselItem>
             ))}
           </CarouselContent>
