@@ -59,18 +59,20 @@ const chartConfig = {
 interface CarouselSlideContentProps {
   slide: SlideData;
   chartData: Array<{ time: string; generation: number }>; // Add chartData prop
+  rawChartData: Array<{ time: string; generation: number }>; // Add rawChartData prop
   isLoading?: boolean; // Add isLoading prop
 }
 
 function CarouselSlideContent({
   slide,
   chartData,
+  rawChartData,
   isLoading,
 }: CarouselSlideContentProps) {
   return (
-    <main className="z-10 grid grid-cols-[2fr_2fr_2fr_0.08fr_2fr_2fr_2fr_2fr_2fr] grid-rows-[1fr_1fr_1fr_1fr_1fr] gap-4 w-full h-full">
+    <main className="z-10 grid grid-cols-[2fr_2fr_2fr_2fr_2fr_2fr_2fr] grid-rows-[1fr_1fr_1fr_1fr_1fr] gap-4 w-full h-full">
       {/* Div 1 - Description */}
-      <div className="col-span-9 col-start-1">
+      <div className="col-span-8 col-start-1">
         <Card className="h-full">
           <CardContent className=" text-md 4k:text-6xl h-full overflow-auto">
             {slide.description.map((line, idx) => (
@@ -80,167 +82,14 @@ function CarouselSlideContent({
         </Card>
       </div>
 
-      {/* Div 2 - Current Weather Card */}
-      <div className="col-span-2 row-span-3 col-start-1 row-start-2">
-        <Card className="h-full">
-          <CardContent className="h-full flex flex-col justify-between">
-            <div>
-              <span className="font-semibold 4k:text-4xl">
-                {slide.weather.city}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-5xl font-bold 4k:text-8xl">
-                {slide.weather.temp}
-              </div>
-              <div className="text-4xl 4k:text-7xl">
-                {slide.weather.icon ? (
-                  <img
-                    src={slide.weather.icon}
-                    alt={slide.weather.condition}
-                    className="w-16 h-16 4k:w-24 4k:h-24"
-                  />
-                ) : // Fallback emoji if no icon available
-                slide.weather.condition === "Sunny" ? (
-                  "☀️"
-                ) : (
-                  "🌥️"
-                )}
-              </div>
-            </div>
-            <div className="text-xl 4k:text-5xl">{slide.weather.condition}</div>
-            <div className="text-right text-sm 4k:text-4xl text-gray-600">
-              Last Update: <br /> {slide.weather.lastUpdate}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Div 3 - Wind */}
-      <div className="col-start-3 row-start-2">
-        <Card className="h-full shadow-lg">
-          <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-3xl flex items-center justify-left gap-2">
-              <img
-                src="/Icons/windy.png"
-                alt="Wind"
-                className="w-4 h-4 4k:w-8 4k:h-8"
-                style={{
-                  filter:
-                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
-                }}
-              />
-              Wind Speed
-            </div>
-            <div className="font-semibold text-lg 4k:text-4xl">
-              {slide.weather.wind}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Div 4 - Humidity */}
-      <div className="col-start-3 row-start-3">
-        <Card className="h-full shadow-lg">
-          <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-3xl flex items-center justify-left gap-2">
-              <img
-                src="/Icons/humidity.png"
-                alt="Humidity"
-                className="w-4 h-4 4k:w-8 4k:h-8"
-                style={{
-                  filter:
-                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
-                }}
-              />
-              Humidity
-            </div>
-            <div className="font-semibold text-lg 4k:text-4xl">
-              {slide.weather.humidity}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Div 5 - Precipitation */}
-      <div className="col-start-3 row-start-4">
-        <Card className="h-full shadow-lg">
-          <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-3xl flex items-center justify-left gap-2">
-              <img
-                src="/Icons/rain.png"
-                alt="Precipitation"
-                className="w-4 h-4 4k:w-8 4k:h-8"
-                style={{
-                  filter:
-                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
-                }}
-              />
-              Precipitation
-            </div>
-            <div className="font-semibold text-lg 4k:text-4xl">
-              {slide.weather.precip}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Div 6 - Vertical Separator */}
-      <div className="row-span-3 col-start-4 row-start-2 flex items-center justify-center bg-card rounded-lg"></div>
-
-      {/* Div 7 - Generation */}
-      <div className="col-start-5 row-start-2">
-        <Card className="h-full backdrop-blur-md border-0 shadow-lg">
-          <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-3xl flex items-center justify-left gap-2">
-              <img
-                src="/Icons/electricity-icon-png-4541.png"
-                alt="Generation"
-                className="w-4 h-4 4k:w-8 4k:h-8"
-                style={{
-                  filter:
-                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
-                }}
-              />
-              Generation
-            </div>
-            <div className="font-semibold text-xl 4k:text-5xl">
-              {slide.generation.generation}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Div 8 - Efficiency */}
-      <div className="col-start-5 row-start-3">
-        <Card className="h-full backdrop-blur-md border-0 shadow-lg">
-          <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-5xl">Efficiency</div>
-            <div className="font-semibold text-xl 4k:text-5xl">
-              {slide.generation.efficiency}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Div 9 - Uptime */}
-      <div className="col-start-5 row-start-4">
-        <Card className="h-full backdrop-blur-md border-0 shadow-lg">
-          <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 4k:text-5xl">Uptime</div>
-            <div className="font-semibold text-xl 4k:text-5xl">
-              {slide.generation.uptime}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Div 10 - Chart - use the passed chartData */}
-      <div className="col-span-4 row-span-3 col-start-6 row-start-2">
+      {/* Div 2 - Resource Generation (Last 6 Hours) */}
+      <div className="col-span-3 row-span-3 col-start-2 row-start-2">
         <Card className="h-full">
           <CardHeader>
-            <CardTitle>
-              MW Generation (Last 6 Hours)
+            <CardTitle className="flex items-center justify-between">
+              <span>Resource Generation (Last 6 Hours)</span>
+
+              
               {isLoading && (
                 <span className="text-sm text-gray-500 ml-2">(Loading...)</span>
               )}
@@ -253,7 +102,7 @@ function CarouselSlideContent({
                 height={248}
                 data={chartData}
                 margin={{
-                  top: 0,
+                  top: 20,
                   left: -10,
                   right: 12,
                   bottom: 0,
@@ -272,6 +121,137 @@ function CarouselSlideContent({
                   tickLine={true}
                   axisLine={true}
                   tickMargin={8}
+                  domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]}
+                />
+                <Area
+                  dataKey="generation"
+                  type="natural"
+                  fill="var(--color-accent)"
+                  stroke="var(--color-accent)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Div 5 - Precipitation */}
+      <div className="col-start-1 row-start-2">
+        <Card className="h-full shadow-lg">
+          <CardContent className="text-center h-full flex flex-col justify-center">
+          <span className="text-gray-600 mb-1 text-sm 4k:text-3xl flex items-center gap-2">
+                <img
+                  src="/Icons/electricity-icon-png-4541.png"
+                  alt="Generation"
+                  className="w-4 h-4 4k:w-8 4k:h-8"
+                  style={{
+                    filter:
+                      "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
+                  }}
+                />
+                Real Time Gen 
+              </span>
+            <div className="font-semibold text-lg 4k:text-4xl">
+            {slide.generation.generation}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Div 4 - Current Weather */}
+      <div className="col-start-1 row-start-3">
+        <Card className="h-full shadow-lg">
+          <CardContent className="text-center h-full flex flex-col justify-center">
+            <div className="text-gray-600 mb-1 text-sm 4k:text-3xl flex items-center justify-left gap-2">
+              <img
+                src="/Icons/thermometer (1).png"
+                alt="Weather"
+                className="w-4 h-4 4k:w-8 4k:h-8"
+                style={{
+                  filter:
+                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
+                }}
+              />
+              {slide.weather.city}
+            </div>
+            <div className="font-semibold text-lg 4k:text-4xl flex items-center justify-center gap-2">
+              {slide.weather.temp}
+              <img
+                src={slide.weather.icon}
+                alt={slide.weather.condition}
+                className="w-6 h-6 4k:w-12 4k:h-12"
+              />
+            </div>
+            <div className="text-sm text-gray-500 4k:text-2xl mt-1 flex items-center justify-center gap-2">
+              {slide.weather.condition}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Div 3 - Wind */}
+      <div className="col-start-1 row-start-4">
+        <Card className="h-full shadow-lg">
+          <CardContent className="text-center h-full flex flex-col justify-center">
+            <div className="text-gray-600 mb-1 text-sm 4k:text-3xl flex items-center justify-left gap-2">
+              <img
+                src="/Icons/windy.png"
+                alt="Wind"
+                className="w-4 h-4 4k:w-8 4k:h-8"
+                style={{
+                  filter:
+                    "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
+                }}
+              />
+              Wind Speed
+            </div>
+            <div className="font-semibold text-lg 4k:text-4xl">
+              {slide.weather.wind}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+
+      {/* Div 7 - Raw Data Chart - Last 5 Minutes */}
+      <div className="col-span-4 row-span-3 col-start-5 row-start-2">
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Resource Generation (Last 5 Minutes)</span>
+              {isLoading && (
+                <span className="text-sm text-gray-500 ml-2">(Loading...)</span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-[calc(100%-3rem)]">
+            <ChartContainer config={chartConfig} className="h-full w-full">
+              <AreaChart
+                width={516}
+                height={248}
+                data={rawChartData}
+                margin={{
+                  top: 20,
+                  left: -10,
+                  right: 12,
+                  bottom: 0,
+                }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="time"
+                  tickLine={true}
+                  axisLine={true}
+                  tickMargin={8}
+                  tickFormatter={(value) => value.toString()}
+                />
+                <YAxis
+                  dataKey="generation"
+                  tickLine={true}
+                  axisLine={true}
+                  tickMargin={8}
+                  domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.1)]}
                 />
                 <Area
                   dataKey="generation"
@@ -289,7 +269,7 @@ function CarouselSlideContent({
   );
 }
 
-export function WeatherDashboard() {
+export function GenerationDashboard() {
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
@@ -357,7 +337,25 @@ export function WeatherDashboard() {
   const [allVTScadaData, setAllVTScadaData] = useState<{ [key: number]: any }>(
     {}
   );
+  const [allRawVTScadaData, setAllRawVTScadaData] = useState<{
+    [key: number]: any;
+  }>({});
   const lastVTScadaUpdate = useRef(0);
+
+  // Function to extract last 5 minutes of raw data
+  const processLast5MinutesRaw = (
+    data: Array<{ time: string; generation: number; timestamp: number }>
+  ) => {
+    if (!data || data.length === 0) return [];
+
+    const now = Date.now() / 1000; // Current time in Unix seconds
+    const fiveMinutesAgo = now - 5 * 60; // 5 minutes ago in Unix seconds
+
+    // Filter data to only include last 5 minutes
+    const recentData = data.filter((item) => item.timestamp >= fiveMinutesAgo);
+
+    return recentData;
+  };
 
   // Add this useEffect for VTScada data
   useEffect(() => {
@@ -385,20 +383,26 @@ export function WeatherDashboard() {
           const response = await fetch(url);
           if (response.ok) {
             const data = await response.json();
-            return { slideIndex, data: data.chartData, isIncremental };
+            return {
+              slideIndex,
+              chartData: data.chartData,
+              rawChartData: data.rawChartData,
+              isIncremental,
+            };
           }
           return null;
         });
 
         const results = await Promise.all(vtscadaPromises);
         const vtscadaMap: { [key: number]: any } = {};
+        const rawVtscadaMap: { [key: number]: any } = {};
 
         results.forEach((result) => {
           if (result) {
             if (result.isIncremental) {
-              // Merge incremental data with existing data
+              // Merge incremental data with existing data for averaged data
               const existingData = allVTScadaData[result.slideIndex] || [];
-              const newData = result.data || [];
+              const newData = result.chartData || [];
 
               // Create a map to merge data by timestamp
               const dataMap = new Map();
@@ -425,9 +429,17 @@ export function WeatherDashboard() {
               );
 
               vtscadaMap[result.slideIndex] = mergedData;
+
+              // For raw data, just keep the last 5 minutes from the new raw data
+              const rawData = result.rawChartData || [];
+              rawVtscadaMap[result.slideIndex] =
+                processLast5MinutesRaw(rawData);
             } else {
-              // Full data replacement
-              vtscadaMap[result.slideIndex] = result.data;
+              // Full data replacement for both averaged and raw data
+              vtscadaMap[result.slideIndex] = result.chartData;
+              rawVtscadaMap[result.slideIndex] = processLast5MinutesRaw(
+                result.rawChartData || []
+              );
             }
           }
         });
@@ -435,6 +447,11 @@ export function WeatherDashboard() {
         setAllVTScadaData((prevData) => ({
           ...prevData,
           ...vtscadaMap,
+        }));
+
+        setAllRawVTScadaData((prevData) => ({
+          ...prevData,
+          ...rawVtscadaMap,
         }));
         lastVTScadaUpdate.current = now; // Set at the end
       } catch (error) {
@@ -446,10 +463,6 @@ export function WeatherDashboard() {
     fetchAllVTScada();
   }, [current]);
 
-  useEffect(() => {
-    console.log("Changing on slide change", current);
-  }, [current]);
-
   // Use the cached weather data instead of useWeather
   const currentLocation = locations[current] || locations[0];
   const weatherData = allWeatherData[currentLocation];
@@ -458,6 +471,7 @@ export function WeatherDashboard() {
 
   // Replace useChartData with cached VTScada data
   const chartData = allVTScadaData[current] || [];
+  const rawChartData = allRawVTScadaData[current] || [];
   const chartLoading = !chartData.length;
   const currentGeneration =
     chartData.length > 0
@@ -642,6 +656,9 @@ export function WeatherDashboard() {
                   chartData={
                     index === current ? chartData : []
                   } /* Only pass data to current slide */
+                  rawChartData={
+                    index === current ? rawChartData : []
+                  } /* Only pass raw data to current slide */
                   isLoading={chartLoading} /* Show loading state */
                 />
               </CarouselItem>

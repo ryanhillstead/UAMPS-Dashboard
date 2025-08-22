@@ -1,14 +1,14 @@
 "use client";
 
 import { Tabs } from "../components/ui/tabs";
-import { WeatherDashboard } from "../components/ui/weatherDash";
+import { GenerationDashboard } from "../components/ui/weatherDash";
 
 export default function TabsDemo() {
   const tabs = [
     {
-      title: "Red Mesa Solar",
-      value: "red-mesa-solar",
-      content: <WeatherDashboard />,
+      title: "Generation Dashboard",
+      value: "generation-dashboard",
+      content: <GenerationDashboard />,
     },
     {
       title: "Some Other Dashboard",
@@ -29,7 +29,7 @@ export default function TabsDemo() {
         tabClassName="hidden"
         contentClassName="mt-0 h-full"
         autoSwitch={false}
-        switchInterval={60000}
+        switchInterval={10000}
       />
     </div>
   );

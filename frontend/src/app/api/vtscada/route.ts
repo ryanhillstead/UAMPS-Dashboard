@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 const FACILITIES = {
   0: { name: "Red Mesa Solar", pointName: "008 UAMPS Nebo 13_8 RTAC TP4\\UAMPS Nebo 13_8 RTAC TP4\\NTUA\\Red Mesa Solar\\AnalogInputs\\WattsREC:Value" },
   1: { name: "Veyo Heat Recovery", pointName: "030 UAMPS Veyo RTAC TP1\\UAMPS Veyo RTAC TP1\\Veyo\\Veyo Check Meter\\AnalogInputs\\WattsDEL:Value" },  
-  2: { name: "Horse Butte Wind", pointName: "020 UAMPS HBW1 RTAC TP1\\UAMPS HBW RTAC TP1\\HBW\\HBW Meter\\Calculations\\WattsREC:Value" },
-  //3: { name: "Hunter", pointName: "HUNTER_GENERATION" },
+  2: { name: "Horse Butte Wind", pointName: "020 UAMPS HBW1 RTAC TP1\\UAMPS HBW RTAC TP1\\HBW\\HBW Meter\\AnalogInputs\\Watts:Value" },
+  //3: { name: "Hunter", pointName: "009 UAMPS Nebo 13_8 RTAC TP5\\UAMPS Nebo 13_8 RTAC TP5\\HunterII\\AnalogInputs\\PAC HunterII Net MW:Value" },
   //4: { name: "Steel", pointName: "STEEL_GENERATION" }
 };
 
@@ -42,7 +42,7 @@ function processChartData(apiResponse: any, isIncremental: boolean = false): Cha
   
   apiResponse.values.forEach((row: any[]) => {
     const unixTimestamp = row[0]; // Unix timestamp in seconds
-    const generationValue = row[1];
+    let generationValue = row[1];
     
     // Round down to nearest 5-minute interval (300 seconds)
     const intervalStart = Math.floor(unixTimestamp / 300) * 300;
@@ -50,8 +50,11 @@ function processChartData(apiResponse: any, isIncremental: boolean = false): Cha
     if (!intervalMap.has(intervalStart)) {
       intervalMap.set(intervalStart, []);
     }
-    // Include zero values - only exclude null/undefined
+    // Include zero values - only exclude null/undefined and negative values
     if (generationValue !== null && generationValue !== undefined) {
+      if(generationValue < 0) {
+        generationValue = generationValue * -1;
+      }
       intervalMap.get(intervalStart)!.push(generationValue);
     }
   });
@@ -84,10 +87,64 @@ function processChartData(apiResponse: any, isIncremental: boolean = false): Cha
         minute: '2-digit',
         hour12: true 
       }),
-      generation: Math.round((averageValue / 1000000) * 1000) / 1000, // Convert to MW and round to 3 decimal places
+      generation: Math.max(0, Math.round((averageValue / 1000000) * 1000) / 1000), // Ensure non-negative and convert to MW
       timestamp: intervalStart, // Store Unix timestamp for caching
     });
   });
+
+  return chartData;
+}
+
+// Function to process VTScada API response into raw data points (no averaging)
+function processRawChartData(apiResponse: any): ChartData[] {
+  // Check if we have a valid response structure
+  if (!apiResponse || typeof apiResponse !== 'object') {
+    console.log("Invalid API response structure for raw data");
+    return generateZeroDataRaw();
+  }
+
+  // Handle case where values array is missing or empty
+  if (!apiResponse.values || !Array.isArray(apiResponse.values) || apiResponse.values.length === 0) {
+    console.log("No values in API response for raw data");
+    return generateZeroDataRaw();
+  }
+
+  const chartData: ChartData[] = [];
+  
+  apiResponse.values.forEach((row: any[]) => {
+    const unixTimestamp = row[0]; // Unix timestamp in seconds
+    let generationValue = row[1];
+    
+    // Include zero values - only exclude null/undefined and negative values
+    if (generationValue !== null && generationValue !== undefined) {
+      if(generationValue < 0) {
+        generationValue = generationValue * -1;
+      }
+      
+      // Convert Unix timestamp to JavaScript Date
+      const timestamp = new Date(unixTimestamp * 1000);
+      
+      chartData.push({
+        time: timestamp.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true 
+        }),
+        generation: Math.max(0, Math.round((generationValue / 1000000) * 1000) / 1000), // Ensure non-negative and convert to MW
+        timestamp: unixTimestamp, // Store Unix timestamp for caching
+      });
+    }
+  });
+
+  // Sort by timestamp
+  chartData.sort((a, b) => a.timestamp - b.timestamp);
+
+  // If no valid data was processed, return zero data
+  if (chartData.length === 0) {
+    console.log("No valid raw data points found - generating zero data");
+    return generateZeroDataRaw();
+  }
 
   return chartData;
 }
@@ -142,6 +199,32 @@ function generateZeroData(): ChartData[] {
   return chartData;
 }
 
+// Helper function to generate zero raw data points for the last 5 minutes
+function generateZeroDataRaw(): ChartData[] {
+  const chartData: ChartData[] = [];
+  const now = Date.now();
+  const fiveMinutesAgo = now - (5 * 60 * 1000);
+  
+  // Generate data points every 30 seconds for the last 5 minutes
+  for (let time = fiveMinutesAgo; time <= now; time += 30 * 1000) {
+    const timestamp = new Date(time);
+    const unixTimestamp = Math.floor(time / 1000);
+    
+    chartData.push({
+      time: timestamp.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true 
+      }),
+      generation: 0,
+      timestamp: unixTimestamp,
+    });
+  }
+  
+  return chartData;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -170,9 +253,6 @@ export async function GET(request: NextRequest) {
     // Convert to Unix timestamps (seconds) for the database query
     const endTime = Math.floor(endTimeMs / 1000);
     const startTime = Math.floor(startTimeMs / 1000);
-    
-    const query = `select timestamp, \"${pointName}\" from history where timestamp >= ${startTime} and timestamp < ${endTime} order by timestamp asc`;
-    const encodedQuery = encodeURIComponent(query);
 
     // Get credentials from environment variables
     const baseUrl = process.env.VTSCADA_BASE_URL;
@@ -184,30 +264,74 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'VTScada credentials not configured' }, { status: 500 });
     }
 
-    const url = `${baseUrl}?query=${encodedQuery}`;
+    // Function to fetch all paginated data
+    const fetchAllData = async (baseQuery: string): Promise<any> => {
+      const allResults = { values: [] as any[] };
+      let pageToken: string | null = null;
+      let pageCount = 0;
+      
+      do {
+        pageCount++;
+        // Build URL with pagination token as separate parameter
+        const url: string = pageToken 
+          ? `${baseUrl}?query=${encodeURIComponent(baseQuery)}&PageToken=${pageToken}`
+          : `${baseUrl}?query=${encodeURIComponent(baseQuery)}`;
+        
+        console.log(`Fetching page ${pageCount} for facility ${slideIndex}`);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${btoa(`${username}:${password}`)}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-    // Make the API call (this runs server-side, so no CORS issues)
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${btoa(`${username}:${password}`)}`,
-        'Content-Type': 'application/json',
-      },
-    });
+        if (!response.ok) {
+          console.log(`VTScada API error: ${response.status}`);
+          throw new Error(`VTScada API error: ${response.status}`);
+        }
 
-    if (!response.ok) {
-      console.log(`VTScada API error: ${response.status}`);
-      console.log(response);
-      return NextResponse.json({ error: 'VTScada API error' }, { status: response.status });
-    }
+        const pageData = await response.json();
+        console.log(pageData.nextPageToken);
+        
+        // Append values from this page to our results
+        if (pageData.results && pageData.results.values) {
+          allResults.values.push(...pageData.results.values);
+          console.log(`Page ${pageCount}: Added ${pageData.results.values.length} data points`);
+        }
+        
+        // Check for next page token
+        pageToken = pageData.nextPageToken || null;
+        //console.log(pageToken);
+        if (pageToken) {
+          console.log(`Next page token found, fetching page ${pageCount + 1}`);
+        }
+        
+        // Safety check to prevent infinite loops
+        if (pageCount > 50) {
+          console.log("Too many pages, stopping pagination");
+          break;
+        }
+        
+      } while (pageToken);
+      
+      console.log(`Total pages fetched: ${pageCount}, Total data points: ${allResults.values.length}`);
+      return { results: allResults };
+    };
 
-    const data = await response.json();
+    const query = `select timestamp, \"${pointName}\" from history where timestamp >= ${startTime} and timestamp < ${endTime} order by timestamp asc`;
+
+    // Fetch all paginated data
+    const data = await fetchAllData(query);
     
-    // Process the data into 5-minute intervals and return processed chart data
+    // Process the data into both averaged and raw formats
     const processedData = processChartData(data.results, isIncremental);
+    const rawData = processRawChartData(data.results);
     
     return NextResponse.json({ 
       chartData: processedData,
+      rawChartData: rawData,
       isIncremental,
       timestamp: Date.now()
     });
