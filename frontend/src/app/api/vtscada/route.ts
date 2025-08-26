@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Configuration for each facility
 const FACILITIES = {
-  0: { name: "Red Mesa Solar", pointName: "008 UAMPS Nebo 13_8 RTAC TP4\\UAMPS Nebo 13_8 RTAC TP4\\NTUA\\Red Mesa Solar\\AnalogInputs\\WattsREC:Value" },
-  1: { name: "Veyo Heat Recovery", pointName: "030 UAMPS Veyo RTAC TP1\\UAMPS Veyo RTAC TP1\\Veyo\\Veyo Check Meter\\AnalogInputs\\WattsDEL:Value" },  
-  2: { name: "Horse Butte Wind", pointName: "020 UAMPS HBW1 RTAC TP1\\UAMPS HBW RTAC TP1\\HBW\\HBW Meter\\AnalogInputs\\Watts:Value" },
-  //3: { name: "Hunter", pointName: "009 UAMPS Nebo 13_8 RTAC TP5\\UAMPS Nebo 13_8 RTAC TP5\\HunterII\\AnalogInputs\\PAC HunterII Net MW:Value" },
-  //4: { name: "Steel", pointName: "STEEL_GENERATION" }
+  0: { name: "Horse Butte Wind", pointName: "020 UAMPS HBW1 RTAC TP1\\UAMPS HBW RTAC TP1\\HBW\\HBW Meter\\Calculations\\WattsREC:Value" },
+  1: { name: "Hunter", pointName: "009 UAMPS Nebo 13_8 RTAC TP5\\UAMPS Nebo 13_8 RTAC TP5\\HunterII\\AnalogInputs\\PAC HunterII Net MW:Value" },  
+  2: { name: "Nebo Power Plant", pointName: "007 UAMPS Nebo 13_8 RTAC TP3\\UAMPS Nebo 13_8 RTAC TP3\\Nebo Power Station\\Calculations\\Nebo Net:Value" },
+  3: { name: "Red Mesa Solar", pointName: "008 UAMPS Nebo 13_8 RTAC TP4\\UAMPS Nebo 13_8 RTAC TP4\\NTUA\\Red Mesa Solar\\AnalogInputs\\WattsREC:Value" },
+  4: { name: "Steel", pointName: "002 UAMPS Main RTAC TP2\\UAMPS Main RTAC TP2\\Steel Solar\\Steel Solar PAC\\Calculations\\MWREC:Value" },
+  5: { name: "Veyo Heat Recovery", pointName: "030 UAMPS Veyo RTAC TP1\\UAMPS Veyo RTAC TP1\\Veyo\\Veyo Check Meter\\AnalogInputs\\WattsREC:Value" } 
 };
 
 // Types for the processed chart data
@@ -17,7 +18,7 @@ interface ChartData {
 }
 
 // Function to process VTScada API response into 5-minute intervals
-function processChartData(apiResponse: any, isIncremental: boolean = false): ChartData[] {
+function processChartData(apiResponse: any, facilityId: number, isIncremental: boolean = false): ChartData[] {
   // Check if we have a valid response structure
   if (!apiResponse || typeof apiResponse !== 'object') {
     console.log("Invalid API response structure");
@@ -87,7 +88,7 @@ function processChartData(apiResponse: any, isIncremental: boolean = false): Cha
         minute: '2-digit',
         hour12: true 
       }),
-      generation: Math.max(0, Math.round((averageValue / 1000000) * 1000) / 1000), // Ensure non-negative and convert to MW
+      generation: Math.max(0, Math.round((facilityId === 1 || facilityId === 2 || facilityId === 4 ? averageValue : averageValue/1000000) * 100) / 100), // Ensure non-negative
       timestamp: intervalStart, // Store Unix timestamp for caching
     });
   });
@@ -96,7 +97,7 @@ function processChartData(apiResponse: any, isIncremental: boolean = false): Cha
 }
 
 // Function to process VTScada API response into raw data points (no averaging)
-function processRawChartData(apiResponse: any): ChartData[] {
+function processRawChartData(apiResponse: any, facilityId: number): ChartData[] {
   // Check if we have a valid response structure
   if (!apiResponse || typeof apiResponse !== 'object') {
     console.log("Invalid API response structure for raw data");
@@ -131,7 +132,7 @@ function processRawChartData(apiResponse: any): ChartData[] {
           second: '2-digit',
           hour12: true 
         }),
-        generation: Math.max(0, Math.round((generationValue / 1000000) * 1000) / 1000), // Ensure non-negative and convert to MW
+        generation: Math.max(0, Math.round((facilityId === 1 || facilityId === 2 || facilityId === 4 ? generationValue : generationValue/1000000) * 100) / 100), // Ensure non-negative and convert to MW
         timestamp: unixTimestamp, // Store Unix timestamp for caching
       });
     }
@@ -326,8 +327,8 @@ export async function GET(request: NextRequest) {
     const data = await fetchAllData(query);
     
     // Process the data into both averaged and raw formats
-    const processedData = processChartData(data.results, isIncremental);
-    const rawData = processRawChartData(data.results);
+    const processedData = processChartData(data.results, slideIndex, isIncremental);
+    const rawData = processRawChartData(data.results, slideIndex);
     
     return NextResponse.json({ 
       chartData: processedData,

@@ -16,7 +16,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { ChartContainer } from "../ui/chart";
 import { transformWeatherData } from "../../lib/utils";
-
+import { IconBolt } from "@tabler/icons-react";
 import { useState, useEffect, useRef } from "react";
 
 // Types for slide data
@@ -33,8 +33,6 @@ interface WeatherData {
 
 interface GenerationData {
   generation: string;
-  efficiency: string;
-  uptime: string;
 }
 
 interface SlideData {
@@ -70,11 +68,11 @@ function CarouselSlideContent({
   isLoading,
 }: CarouselSlideContentProps) {
   return (
-    <main className="z-10 grid grid-cols-[2fr_2fr_2fr_2fr_2fr_2fr_2fr] grid-rows-[1fr_1fr_1fr_1fr_1fr] gap-4 w-full h-full">
+    <main className="z-10 grid grid-cols-[2fr_2fr_2fr_2fr_2fr_2fr_2fr] grid-rows-[.5fr_1fr_1fr] gap-4 w-full h-full">
       {/* Div 1 - Description */}
-      <div className="col-span-8 col-start-1">
+      <div className="col-span-7 col-start-1">
         <Card className="h-full">
-          <CardContent className=" text-md 4k:text-6xl h-full overflow-auto">
+          <CardContent className=" text-md tv:text-3xl h-full overflow-auto font-semibold">
             {slide.description.map((line, idx) => (
               <li key={idx}>{line}</li>
             ))}
@@ -83,13 +81,12 @@ function CarouselSlideContent({
       </div>
 
       {/* Div 2 - Resource Generation (Last 6 Hours) */}
-      <div className="col-span-3 row-span-3 col-start-2 row-start-2">
+      <div className="col-span-3 row-span-2 col-start-5 row-start-2">
         <Card className="h-full">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Resource Generation (Last 6 Hours)</span>
 
-              
               {isLoading && (
                 <span className="text-sm text-gray-500 ml-2">(Loading...)</span>
               )}
@@ -135,35 +132,26 @@ function CarouselSlideContent({
           </CardContent>
         </Card>
       </div>
+      <div className="col-start-4 row-start-2 row-span-2 flex flex-col items-stretch gap-4">
 
       {/* Div 5 - Precipitation */}
-      <div className="col-start-1 row-start-2">
-        <Card className="h-full shadow-lg">
-          <CardContent className="text-center h-full flex flex-col justify-center">
-          <span className="text-gray-600 mb-1 text-sm 4k:text-3xl flex items-center gap-2">
-                <img
-                  src="/Icons/electricity-icon-png-4541.png"
-                  alt="Generation"
-                  className="w-4 h-4 4k:w-8 4k:h-8"
-                  style={{
-                    filter:
-                      "brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(75%)",
-                  }}
-                />
-                Real Time Gen 
-              </span>
+        <Card className="shadow-lg">
+          <CardContent className="text-center flex flex-col justify-center">
+            <span className="text-gray-600 mb-1 text-xs 4k:text-3xl flex items-center gap-2">
+              <IconBolt className="w-4 h-4" />
+              Real Time Gen
+            </span>
             <div className="font-semibold text-lg 4k:text-4xl">
-            {slide.generation.generation}
+              {slide.generation.generation}
             </div>
           </CardContent>
         </Card>
-      </div>
+      
 
       {/* Div 4 - Current Weather */}
-      <div className="col-start-1 row-start-3">
-        <Card className="h-full shadow-lg">
-          <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 text-sm 4k:text-3xl flex items-center justify-left gap-2">
+        <Card className="shadow-lg">
+          <CardContent className="text-center flex flex-col justify-center">
+            <div className="text-gray-600 mb-1 text-xs 4k:text-3xl flex items-center justify-left gap-2">
               <img
                 src="/Icons/thermometer (1).png"
                 alt="Weather"
@@ -183,18 +171,16 @@ function CarouselSlideContent({
                 className="w-6 h-6 4k:w-12 4k:h-12"
               />
             </div>
-            <div className="text-sm text-gray-500 4k:text-2xl mt-1 flex items-center justify-center gap-2">
+            <div className="text-xs text-gray-500 4k:text-2xl mt-1 flex items-center justify-center gap-2">
               {slide.weather.condition}
             </div>
           </CardContent>
         </Card>
-      </div>
 
       {/* Div 3 - Wind */}
-      <div className="col-start-1 row-start-4">
-        <Card className="h-full shadow-lg">
-          <CardContent className="text-center h-full flex flex-col justify-center">
-            <div className="text-gray-600 mb-1 text-sm 4k:text-3xl flex items-center justify-left gap-2">
+        <Card className="shadow-lg">
+          <CardContent className="text-center flex flex-col justify-center">
+            <div className="text-gray-600 mb-1 text-xs 4k:text-3xl flex items-center justify-left gap-2">
               <img
                 src="/Icons/windy.png"
                 alt="Wind"
@@ -213,9 +199,8 @@ function CarouselSlideContent({
         </Card>
       </div>
 
-
       {/* Div 7 - Raw Data Chart - Last 5 Minutes */}
-      <div className="col-span-4 row-span-3 col-start-5 row-start-2">
+      <div className="col-span-3 row-span-2 col-start-1 row-start-2">
         <Card className="h-full">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -276,11 +261,12 @@ export function GenerationDashboard() {
 
   // Define Zip Codes for each site
   const locations = [
-    "84511", // Red Mesa Solar (Blanding near the location)
-    "84782", // Veyo Heat Recovery
     "83427", // Horse Butte Wind
     "84513", // Hunter
+    "84651", // Nebo Power Plant
+    "84511", // Red Mesa Solar (Blanding near the location)
     "84330", // Steel Solar
+    "84782", // Veyo Heat Recovery
   ];
 
   // Add this at the top of the WeatherDashboard component
@@ -360,16 +346,9 @@ export function GenerationDashboard() {
   // Add this useEffect for VTScada data
   useEffect(() => {
     const fetchAllVTScada = async () => {
-      const now = Date.now();
-
-      // Only fetch if 5 minutes have passed
-      if (now - lastVTScadaUpdate.current < 5 * 60 * 1000) return;
-
-      lastVTScadaUpdate.current = now;
-
       try {
-        // Fetch data for all active facilities (0, 1, 2)
-        const vtscadaPromises = [0, 1, 2].map(async (slideIndex) => {
+        // Fetch data for all active facilities (0, 1, 2, 3, 4, 5)
+        const vtscadaPromises = [0, 1, 2, 3, 4, 5].map(async (slideIndex) => {
           // Check if we have cached data for this slide
           const existingData = allVTScadaData[slideIndex] || [];
           const hasExistingData = existingData.length > 0;
@@ -453,7 +432,6 @@ export function GenerationDashboard() {
           ...prevData,
           ...rawVtscadaMap,
         }));
-        lastVTScadaUpdate.current = now; // Set at the end
       } catch (error) {
         console.log("Error fetching VTScada data:", error);
       }
@@ -461,7 +439,13 @@ export function GenerationDashboard() {
 
     // Fetch initially
     fetchAllVTScada();
-  }, [current]);
+
+    // Set up interval to fetch every second (1000ms)
+    const interval = setInterval(fetchAllVTScada, 5 * 1000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, []); // Empty dependency array - runs once on mount and sets up interval
 
   // Use the cached weather data instead of useWeather
   const currentLocation = locations[current] || locations[0];
@@ -474,26 +458,28 @@ export function GenerationDashboard() {
   const rawChartData = allRawVTScadaData[current] || [];
   const chartLoading = !chartData.length;
   const currentGeneration =
-    chartData.length > 0
-      ? `${chartData[chartData.length - 1]?.generation || 0} MW`
+    rawChartData.length > 0
+      ? `${rawChartData[rawChartData.length - 1]?.generation || 0} MW`
       : "N/A";
 
   // Button names corresponding to each slide
   const buttonNames = [
-    "Red Mesa Solar",
-    "Veyo Heat Recovery",
     "Horse Butte Wind",
     "Hunter Power Plant",
+    "Nebo Power Station",
+    "Red Mesa Solar",
     "Steel Solar",
+    "Veyo Heat Recovery",
   ];
 
   // Background images corresponding to each slide
   const backgroundImages = [
-    "/Blymyer_Projects_Red-Mesa_Utah_solar_utility.webp",
-    "/UAMPS-Veyo-Recovered-Energy-Generation-3.webp",
     "/wind-farm.webp",
     "/hunter-plant-background.webp",
+    "/nebo-power-station.webp",
+    "/Blymyer_Projects_Red-Mesa_Utah_solar_utility.webp",
     "/steel-solar.webp",
+    "/UAMPS-Veyo-Recovered-Energy-Generation-3.webp",
   ];
 
   // Preload all background images
@@ -546,15 +532,61 @@ export function GenerationDashboard() {
   const slides: SlideData[] = [
     {
       description: [
-        "The Red Mesa Tapaha Solar Project is a 72 MW (AC) solar photovoltaic facility on Navajo Nation land in southeastern Utah. It began commercial operations in spring 2023 following construction starting mid-2022.",
+        "The Horse Butte Wind Project is a 57.6 MW wind farm comprised of 32 Vestas V-100 1.8 MW wind turbines and related facilities and equipment.",
+        "The facility is located approximately 16 miles east of the City of Idaho Falls and commenced commercial operation in August 2012.",
+        "The project provides UAMPS members with a long-term supply of renewable electric energy and associated environmental attributes.",
+      ],
+      weather: currentWeather, // Use dynamic weather data
+      generation: {
+        generation: currentGeneration, // Use dynamic current generation
+      },
+      chartData: chartData,
+    },
+    {
+      description: [
+        "Hunter II, part of the Hunter Station in Emery County, Utah, is a coal-fired, steam-electric generating unit with a net capacity of 446 megawatts.",
+        "Hunter, jointly owned by PacifiCorp, Deseret Generation and Transmission Co-operative and UAMPS, has commercially operated since June 1980.",
+        "UAMPS owns an undivided 14.582 percent interest in Unit II, representing 65 megawatts of capacity and energy.",
+      ],
+      weather: currentWeather, // Use dynamic weather data
+      generation: {
+        generation: currentGeneration, // Use dynamic current generation
+      },
+      chartData: chartData,
+    },
+    {
+      description: [
+        "The Nebo Power Station is a 140 megawatt combined cycle gas-fired generating facility in Payson City, Utah.",
+        "The facility includes a General Electric Frame 7EA gas turbine, a heat recovery steam generator, a steam turbine and condensers.",
+        "It also includes a cooling tower along with related 138 kV and 46 kV electric substations, transmission lines, and gas pipelines.",
+      ],
+      weather: currentWeather, // Use dynamic weather data
+      generation: {
+        generation: currentGeneration, // Use dynamic current generation
+      },
+      chartData: chartData,
+    },
+    {
+      description: [
+        "The Red Mesa Tapaha Solar Project is a 72 MW (AC) solar photovoltaic facility on Navajo Nation land in southeastern Utah.",
         "Spanning about 500 acres, it produces around 72 megawatts (AC) of clean power—enough for tens of thousands of homes.",
         "The Navajo Tribal Utility Authority developed the project in partnership with UAMPS, which purchases about 66 MW under a 25-year agreement, while 6 MW stays on the reservation to power Navajo communities.",
       ],
       weather: currentWeather, // Use dynamic weather data
       generation: {
         generation: currentGeneration, // Use dynamic current generation
-        efficiency: "98.5%",
-        uptime: "24/7",
+      },
+      chartData: chartData,
+    },
+    {
+      description: [
+        "Steel Solar is an 80 MW (AC) photovoltaic solar farm located in Box Elder County, near Plymouth, UT",
+        "The facility sells its energy output via a 25-year power purchase agreement with UAMPS, benefiting 20 of its municipal members across Utah.",
+        "Steel Solar is UAMPS’s largest solar resource and is expected to deliver long-term value for decades.",
+      ],
+      weather: currentWeather, // Use dynamic weather data
+      generation: {
+        generation: currentGeneration, // Use dynamic current generation
       },
       chartData: chartData,
     },
@@ -567,22 +599,6 @@ export function GenerationDashboard() {
       weather: currentWeather, // Use dynamic weather data
       generation: {
         generation: currentGeneration, // Use dynamic current generation
-        efficiency: "95%",
-        uptime: "24/7",
-      },
-      chartData: chartData,
-    },
-    {
-      description: [
-        "The Horse Butte Wind Project is a 57.6 MW wind farm comprised of 32 Vestas V-100 1.8 MW wind turbines and related facilities and equipment.",
-        "The facility is located approximately 16 miles east of the City of Idaho Falls and commenced commercial operation in August 2012.",
-        "The project provides UAMPS members with a long-term supply of renewable electric energy and associated environmental attributes.",
-      ],
-      weather: currentWeather, // Use dynamic weather data
-      generation: {
-        generation: currentGeneration, // Use dynamic current generation
-        efficiency: "98.5%",
-        uptime: "24/7",
       },
       chartData: chartData,
     },
@@ -611,7 +627,7 @@ export function GenerationDashboard() {
       <div className="mx-[8vh] my-[6vh] 4k:mx-[8vh] 4k:my-[8vh] z-10 relative">
         {/* Header - Scalable */}
         <header>
-          <div className="font-sans text-lg text-right tv:text-3xl 4k:text-6xl ">
+          <div className="text-lg font-extrabold text-right">
             {new Date().toLocaleDateString("en-US", {
               month: "long",
               day: "numeric",
@@ -630,12 +646,12 @@ export function GenerationDashboard() {
                 <Button
                   key={name}
                   size="lg"
-                  className={`h-10 w-40 tv:w-40 4k:w-lg 4k:h-20 transition-all duration-300 ${
+                  className={`h-10 w-35 tv:w-50 4k:w-lg 4k:h-20 transition-all duration-300 ${
                     current === index ? "bg-primary text-white" : "bg-card"
                   }`}
                   onClick={() => api?.scrollTo(index)}
                 >
-                  <div className="text-lg 4k:text-6xl">{name}</div>
+                  <h1 className="text-lg font-extrabold">{name}</h1>
                 </Button>
               ))}
             </div>
@@ -645,7 +661,7 @@ export function GenerationDashboard() {
         {/* Main Content Carousel */}
         <Carousel
           setApi={setApi}
-          plugins={[Autoplay({ delay: 5000, stopOnInteraction: false })]}
+          plugins={[Autoplay({ delay: 30000, stopOnInteraction: false })]}
           className="w-full"
         >
           <CarouselContent>
