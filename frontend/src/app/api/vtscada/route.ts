@@ -244,8 +244,8 @@ export async function GET(request: NextRequest) {
     
     let startTimeMs: number;
     if (isIncremental) {
-      // For incremental updates, get last 10 minutes (to ensure we don't miss any data)
-      startTimeMs = endTimeMs - (10 * 60 * 1000);
+      // For incremental updates, get last 5 minutes (to ensure we don't miss any data)
+      startTimeMs = endTimeMs - (5 * 60 * 1000);
     } else {
       // For initial load, get last 6 hours
       startTimeMs = endTimeMs - (6 * 60 * 60 * 1000);
@@ -278,7 +278,6 @@ export async function GET(request: NextRequest) {
           ? `${baseUrl}?query=${encodeURIComponent(baseQuery)}&PageToken=${pageToken}`
           : `${baseUrl}?query=${encodeURIComponent(baseQuery)}`;
         
-        console.log(`Fetching page ${pageCount} for facility ${slideIndex}`);
         
         const response = await fetch(url, {
           method: 'GET',
@@ -294,7 +293,6 @@ export async function GET(request: NextRequest) {
         }
 
         const pageData = await response.json();
-        console.log(pageData.nextPageToken);
         
         // Append values from this page to our results
         if (pageData.results && pageData.results.values) {
@@ -305,9 +303,6 @@ export async function GET(request: NextRequest) {
         // Check for next page token
         pageToken = pageData.nextPageToken || null;
         //console.log(pageToken);
-        if (pageToken) {
-          console.log(`Next page token found, fetching page ${pageCount + 1}`);
-        }
         
         // Safety check to prevent infinite loops
         if (pageCount > 50) {

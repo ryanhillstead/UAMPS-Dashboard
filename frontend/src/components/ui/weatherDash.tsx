@@ -133,8 +133,7 @@ function CarouselSlideContent({
         </Card>
       </div>
       <div className="col-start-4 row-start-2 row-span-2 flex flex-col items-stretch gap-4">
-
-      {/* Div 5 - Precipitation */}
+        {/* Div 5 - Precipitation */}
         <Card className="shadow-lg">
           <CardContent className="text-center flex flex-col justify-center">
             <span className="text-gray-600 mb-1 text-xs 4k:text-3xl flex items-center gap-2">
@@ -146,9 +145,8 @@ function CarouselSlideContent({
             </div>
           </CardContent>
         </Card>
-      
 
-      {/* Div 4 - Current Weather */}
+        {/* Div 4 - Current Weather */}
         <Card className="shadow-lg">
           <CardContent className="text-center flex flex-col justify-center">
             <div className="text-gray-600 mb-1 text-xs 4k:text-3xl flex items-center justify-left gap-2">
@@ -177,7 +175,7 @@ function CarouselSlideContent({
           </CardContent>
         </Card>
 
-      {/* Div 3 - Wind */}
+        {/* Div 3 - Wind */}
         <Card className="shadow-lg">
           <CardContent className="text-center flex flex-col justify-center">
             <div className="text-gray-600 mb-1 text-xs 4k:text-3xl flex items-center justify-left gap-2">
@@ -254,7 +252,11 @@ function CarouselSlideContent({
   );
 }
 
-export function GenerationDashboard() {
+export function GenerationDashboard({
+  isActive = true,
+}: {
+  isActive?: boolean;
+}) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
@@ -278,6 +280,7 @@ export function GenerationDashboard() {
 
   // Replace the useWeather call with this effect
   useEffect(() => {
+    if (!isActive) return;
     const fetchAllWeather = async () => {
       const now = Date.now();
 
@@ -317,7 +320,7 @@ export function GenerationDashboard() {
 
     // Fetch initially and then every 30 minutes
     fetchAllWeather();
-  }, [current]);
+  }, [isActive]);
 
   // Add VTScada state and ref
   const [allVTScadaData, setAllVTScadaData] = useState<{ [key: number]: any }>(
@@ -345,6 +348,7 @@ export function GenerationDashboard() {
 
   // Add this useEffect for VTScada data
   useEffect(() => {
+    if (!isActive) return;
     const fetchAllVTScada = async () => {
       try {
         // Fetch data for all active facilities (0, 1, 2, 3, 4, 5)
@@ -440,12 +444,12 @@ export function GenerationDashboard() {
     // Fetch initially
     fetchAllVTScada();
 
-    // Set up interval to fetch every second (1000ms)
-    const interval = setInterval(fetchAllVTScada, 5 * 1000);
+    // Set up interval to fetch every 10 minutes
+    const interval = setInterval(fetchAllVTScada, 10 * 60 * 1000);
 
     // Cleanup interval on component unmount
     return () => clearInterval(interval);
-  }, []); // Empty dependency array - runs once on mount and sets up interval
+  }, [isActive]); // Empty dependency array - runs once on mount and sets up interval
 
   // Use the cached weather data instead of useWeather
   const currentLocation = locations[current] || locations[0];
@@ -475,10 +479,10 @@ export function GenerationDashboard() {
   // Background images corresponding to each slide
   const backgroundImages = [
     "/wind-farm.webp",
-    "/hunter-plant-background.webp",
-    "/nebo-power-station.webp",
+    "/DSC_2280.webp",
+    "/DSC_8961.webp",
     "/Blymyer_Projects_Red-Mesa_Utah_solar_utility.webp",
-    "/steel-solar.webp",
+    "/IMG_6264.webp",
     "/UAMPS-Veyo-Recovered-Energy-Generation-3.webp",
   ];
 

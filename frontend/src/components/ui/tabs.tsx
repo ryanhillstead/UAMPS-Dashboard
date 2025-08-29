@@ -18,6 +18,7 @@ export const Tabs = ({
   contentClassName,
   autoSwitch = false,
   switchInterval = 10000,
+  onActiveChange,
 }: {
   tabs: Tab[];
   containerClassName?: string;
@@ -26,6 +27,7 @@ export const Tabs = ({
   contentClassName?: string;
   autoSwitch?: boolean;
   switchInterval?: number;
+  onActiveChange?: (tab: Tab) => void;
 }) => {
   const [active, setActive] = useState<Tab>(propTabs[0]);
   const [tabs, setTabs] = useState<Tab[]>(propTabs);
@@ -40,6 +42,7 @@ export const Tabs = ({
     setTabs(newTabs);
     setActive(propTabs[idx]); // Use original tab from propTabs
     setCurrentIndex(idx); // Set to the actual index in the original array
+    onActiveChange?.(propTabs[idx]); // Notify parent of active tab change
   };
 
   const moveToNextTab = () => {
